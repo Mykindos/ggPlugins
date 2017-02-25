@@ -176,7 +176,7 @@ void killsteal() {
 							damage += damage2;
 						}
 
-						if (damage > enemy->GetHealth()) {
+						if (damage > enemy->GetHealth() + 50) {
 							if (R->CastOnTarget(enemy)) {
 								return;
 							}
