@@ -2,6 +2,7 @@
 
 PluginSetup("ggTristana");
 
+
 void loadMenu();
 void loadSkills();
 void combo();
@@ -188,7 +189,7 @@ void killsteal() {
 }
 
 IUnit * getEnemyWithE() {
-	/* Causes unknown client crash??
+
 	for (auto enemy : GEntityList->GetAllHeros(false, true)) {
 		if (enemy->HasBuff(debuff1)) {
 			if (me->IsValidTarget(enemy, me->AttackRange())) {
@@ -196,7 +197,7 @@ IUnit * getEnemyWithE() {
 			}
 		}
 	}
-	*/ 
+	
 
 	return GTargetSelector->FindTarget(QuickestKill, PhysicalDamage, me->AttackRange());
 }
