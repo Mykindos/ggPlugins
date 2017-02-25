@@ -1,4 +1,4 @@
-#include "PluginSDK.h"
+#include "..\SDK\PluginSDK.h"
 
 PluginSetup("ggTristana");
 
@@ -91,7 +91,7 @@ void loadMenu() {
 	baseMenu = GPluginSDK->AddMenu("ggTristana");
 	comboMenu = baseMenu->AddMenu("Combo");
 	killstealMenu = baseMenu->AddMenu("Killsteal");
-	miscMenu = baseMenu->AddMenu("Misc");
+	miscMenu = baseMenu->AddMenu("Misc.");
 	drawMenu = baseMenu->AddMenu("Drawing");
 
 
