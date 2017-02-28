@@ -6,6 +6,7 @@ PluginSetup("ggTristana");
 void loadMenu();
 void loadSkills();
 void combo();
+void harass();
 void killsteal();
 void draw();
 void drawCircle(ISpell2 * spell);
@@ -20,7 +21,9 @@ IUnit * getEnemyWithE();
 */
 IMenu * baseMenu;
 IMenu * comboMenu;
+IMenu * harassMenu;
 IMenu * killstealMenu;
+IMenu * killstealMenuSkillR;
 IMenu * drawMenu;
 IMenu * miscMenu;
 IMenu * miscMenuSkillE;
@@ -32,8 +35,11 @@ IMenu * miscMenuSkillQ;
 IMenuOption * comboAttackE;
 IMenuOption * comboAttackQ;
 IMenuOption * comboAttackR;
+IMenuOption * harassAttackE;
+IMenuOption * harassMinMana;
 IMenuOption * miscFocusTargetWithE;
 IMenuOption * killstealWithR;
+IMenuOption * killstealAboveHealth;
 
 IMenuOption * drawE;
 IMenuOption * drawW;
@@ -91,6 +97,7 @@ void loadMenu() {
 
 	baseMenu = GPluginSDK->AddMenu("ggTristana");
 	comboMenu = baseMenu->AddMenu("Combo");
+	harassMenu = baseMenu->AddMenu("Harass");
 	killstealMenu = baseMenu->AddMenu("Killsteal");
 	miscMenu = baseMenu->AddMenu("Misc.");
 	drawMenu = baseMenu->AddMenu("Drawing");
@@ -104,10 +111,18 @@ void loadMenu() {
 	//comboAttackR = comboMenu->CheckBox("R", true);
 	
 	/*
+		Load Harass options into Menu
+	*/
+	harassAttackE = harassMenu->CheckBox("E", true);
+	harassMinMana = harassMenu->AddInteger("Min Mana for Harass", 0, 100, 50);
+
+	/*
 		Load Killsteal options into Menu
 	*/
 
-	killstealWithR = killstealMenu->CheckBox("R", true);
+	killstealMenuSkillR = killstealMenu->AddMenu("R");
+	killstealWithR = killstealMenuSkillR->CheckBox("Use R", true);
+	killstealAboveHealth = killstealMenuSkillR->AddInteger("Ignore Enemy below Health", 0, 10000, 100);
 
 	/*
 		Load Misc options into Menu
@@ -158,6 +173,24 @@ void combo() {
 
 }
 
+void harass() {
+
+	if (miscFocusTargetWithE->Enabled()) {
+		GOrbwalking->SetOverrideTarget(getEnemyWithE());
+	}
+
+	if (me->ManaPercent() >= harassMinMana->GetInteger()) {
+		if (harassAttackE->Enabled()) {
+			if (E->IsReady()) {
+				auto enemy = GTargetSelector->FindTarget(QuickestKill, SpellDamage, E->Range());
+				if (me->IsValidTarget(enemy, E->Range())) {
+					E->CastOnTarget(enemy);
+				}
+			}
+		}
+	}
+}
+
 void killsteal() {
 	if (killstealWithR->Enabled()) {
 		
@@ -165,14 +198,14 @@ void killsteal() {
 			
 			auto enemy = GTargetSelector->FindTarget(QuickestKill, SpellDamage, R->Range());
 			
-				if (me->IsValidTarget(enemy, R->Range())) {
-					if (!enemy->IsDead() && !enemy->IsInvulnerable() && !enemy->HasBuffOfType(BUFF_SpellImmunity)) {
+			if (me->IsValidTarget(enemy, R->Range())) {
+				if (!enemy->IsDead() && !enemy->IsInvulnerable() && !enemy->HasBuffOfType(BUFF_SpellImmunity)) {
+					if (enemy->GetHealth() >= killstealAboveHealth->GetInteger()) {
 						auto damage = GDamage->GetSpellDamage(me, enemy, kSlotR);
-						
+
 						if (enemy->HasBuff(debuff2)) {
 							auto damage2 = GDamage->GetSpellDamage(me, enemy, kSlotE);
 							damage2 = damage2 * (0.3 * enemy->GetBuffCount(debuff2));
-
 							damage += damage2;
 						}
 
@@ -182,7 +215,8 @@ void killsteal() {
 							}
 						}
 					}
-				
+
+				}
 			}
 		}
 	}
@@ -203,10 +237,16 @@ IUnit * getEnemyWithE() {
 }
 
 PLUGIN_EVENT(void) onUpdate() {
-	if (GOrbwalking->GetOrbwalkingMode() == kModeCombo)
-	{
+
+	switch (GOrbwalking->GetOrbwalkingMode()) {
+	case kModeCombo:
 		combo();
+		break;
+	case kModeLaneClear:
+		harass();
+		break;
 	}
+
 
 	killsteal();
 
@@ -227,6 +267,8 @@ void draw() {
 	if (drawR->Enabled()) {
 		drawCircle(R);
 	}
+
+	
 }
 
 void drawCircle(ISpell2 * spell) {
