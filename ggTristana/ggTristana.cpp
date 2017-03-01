@@ -14,6 +14,7 @@ PLUGIN_API void OnLoad(IPluginSDK * sdk);
 PLUGIN_API void OnUnload();
 PLUGIN_EVENT(void) onUpdate();
 PLUGIN_EVENT(void) onRender();
+PLUGIN_EVENT(void) onLevel();
 IUnit * getEnemyWithE();
 
 /*
@@ -74,6 +75,7 @@ PLUGIN_API void OnLoad(IPluginSDK * sdk) {
 
 			GEventManager->AddEventHandler(kEventOnGameUpdate, onUpdate);
 			GEventManager->AddEventHandler(kEventOnRender, onRender);
+			GEventManager->AddEventHandler(kEventOnLevelUp, onLevel);
 			GGame->PrintChat("ggTristana Loaded - Written by Mykindos");
 		}
 		else {
@@ -90,6 +92,7 @@ PLUGIN_API void OnUnload()
 
 	GEventManager->RemoveEventHandler(kEventOnGameUpdate, onUpdate);
 	GEventManager->RemoveEventHandler(kEventOnRender, onRender);
+	GEventManager->RemoveEventHandler(kEventOnLevelUp, onLevel);
 
 }
 
@@ -146,9 +149,8 @@ void loadSkills() {
 	W = GPluginSDK->CreateSpell2(kSlotW, kCircleCast, false, false, static_cast<eCollisionFlags>(kCollidesWithNothing));
 	R = GPluginSDK->CreateSpell2(kSlotR, kTargetCast, true, true, static_cast<eCollisionFlags>(kCollidesWithYasuoWall));
 
-	E->SetOverrideRange(612);
-	R->SetOverrideRange(612);
-
+	E->SetOverrideRange(650);
+	R->SetOverrideRange(650);
 }
 
 void combo() {
@@ -163,7 +165,7 @@ void combo() {
 		}
 	}
 
-	if (comboAttackE->Enabled()) { 
+	if (comboAttackE->Enabled()) {
 
 		if (miscFocusTargetWithE->Enabled()) {
 			GOrbwalking->SetOverrideTarget(getEnemyWithE());
@@ -173,6 +175,7 @@ void combo() {
 			auto enemy = GTargetSelector->FindTarget(QuickestKill, SpellDamage, E->Range());
 			if (me->IsValidTarget(enemy, E->Range())) {
 				if (enemy->GetHealth() >= miscDontEUnderHealth->GetInteger()) {
+
 					E->CastOnTarget(enemy);
 				}
 			}
@@ -255,6 +258,7 @@ PLUGIN_EVENT(void) onUpdate() {
 		break;
 	}
 
+	
 
 	killsteal();
 
@@ -263,6 +267,13 @@ PLUGIN_EVENT(void) onUpdate() {
 
 PLUGIN_EVENT(void) onRender() {
 	draw();
+	
+
+}
+
+PLUGIN_EVENT(void) onLevel() {
+	E->SetOverrideRange(650 + (me->GetLevel() * 7));
+	R->SetOverrideRange(650 + (me->GetLevel() * 7));
 }
 
 void draw() {
