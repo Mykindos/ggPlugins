@@ -38,6 +38,7 @@ IMenuOption * comboAttackR;
 IMenuOption * harassAttackE;
 IMenuOption * harassMinMana;
 IMenuOption * miscFocusTargetWithE;
+IMenuOption * miscDontEUnderHealth;
 IMenuOption * killstealWithR;
 IMenuOption * killstealAboveHealth;
 
@@ -129,6 +130,7 @@ void loadMenu() {
 	*/
 	miscMenuSkillE = miscMenu->AddMenu("E");
 	miscFocusTargetWithE = miscMenuSkillE->CheckBox("Focus Targets with E Debuff", false);
+	miscDontEUnderHealth = miscMenuSkillE->AddInteger("Dont E Enemy Below Health", 0, 10000, 0);
 
 	/*
 		Load Drawing options into Menu
@@ -161,7 +163,7 @@ void combo() {
 		}
 	}
 
-	if (comboAttackE->Enabled()) {
+	if (comboAttackE->Enabled()) { 
 
 		if (miscFocusTargetWithE->Enabled()) {
 			GOrbwalking->SetOverrideTarget(getEnemyWithE());
@@ -170,7 +172,9 @@ void combo() {
 		if (E->IsReady()) {
 			auto enemy = GTargetSelector->FindTarget(QuickestKill, SpellDamage, E->Range());
 			if (me->IsValidTarget(enemy, E->Range())) {
-				E->CastOnTarget(enemy);
+				if (enemy->GetHealth() >= miscDontEUnderHealth->GetInteger()) {
+					E->CastOnTarget(enemy);
+				}
 			}
 		}
 	}
