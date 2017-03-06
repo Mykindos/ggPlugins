@@ -1,5 +1,5 @@
 #include "..\SDK\PluginSDK.h"
-
+#include "..\Utilities\UtilPosition.h"
 #include <algorithm>
 
 void loadMenu();
@@ -7,7 +7,8 @@ void loadMenu();
 PLUGIN_EVENT(void) onRender();
 PLUGIN_API void OnLoad(IPluginSDK * sdk);
 PLUGIN_API void OnUnload();
-float getDistance(IUnit*, IUnit*);
+bool hasSmite(IUnit * hero);
+
 std::vector<IUnit*> tracked;
 
 IUnit * me;
@@ -17,6 +18,7 @@ IMenu * heroMenu;
 
 IMenuOption * gankDistance;
 IMenuOption * usePings;
+IMenuOption * onlyShowSmite;
 
 
 
@@ -30,6 +32,7 @@ void loadMenu() {
 
 	gankDistance = mainMenu->AddInteger("Gank Alert Distance", 0, 100000, 5000);
 	usePings = mainMenu->CheckBox("Use Pings (Client Side)", true);
+	onlyShowSmite = mainMenu->CheckBox("Only Show Enemies /w Smite", false);
 
 	for (auto enemy : GEntityList->GetAllHeros(false, true)) {
 		heroMenu->CheckBox(enemy->ChampionName(), true);
@@ -53,8 +56,13 @@ PLUGIN_EVENT(void) onRender() {
 	for (auto e : GEntityList->GetAllHeros(false, true)) {
 		if (e->IsVisible()) {
 			if (!e->IsDead()) {
-				if (getDistance(me, e) < gankDistance->GetInteger()) {
+				if (UtilPosition::getDistance(me, e) < gankDistance->GetInteger()) {
 					IMenuOption * temp = heroMenu->GetOption(e->ChampionName());
+					if (onlyShowSmite->Enabled()) {
+						if (!hasSmite(e)) {
+							continue;
+						}
+					}
 					if (temp) {
 						if (temp->Enabled()) {
 							if (usePings->Enabled()) {
@@ -88,7 +96,9 @@ PLUGIN_EVENT(void) onRender() {
 	}
 }
 
-float getDistance(IUnit* p, IUnit* t)
-{
-	return (p->GetPosition() - t->GetPosition()).Length2D();
+bool hasSmite(IUnit * hero) {
+	return strcmp(hero->GetSpellName(kSummonerSlot1), "SummonerSmite") == 0 
+		|| strcmp(hero->GetSpellName(kSummonerSlot2), "SummonerSmite") == 0;
 }
+
+
