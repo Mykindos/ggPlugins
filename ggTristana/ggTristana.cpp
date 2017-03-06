@@ -7,6 +7,7 @@ void loadMenu();
 void loadSkills();
 void combo();
 void harass();
+void laneclear();
 void killsteal();
 void draw();
 void drawCircle(ISpell2 * spell);
@@ -23,6 +24,7 @@ IUnit * getEnemyWithE();
 IMenu * baseMenu;
 IMenu * comboMenu;
 IMenu * harassMenu;
+IMenu * laneclearMenu;
 IMenu * killstealMenu;
 IMenu * killstealMenuSkillR;
 IMenu * drawMenu;
@@ -38,6 +40,7 @@ IMenuOption * comboAttackQ;
 IMenuOption * comboAttackR;
 IMenuOption * harassAttackE;
 IMenuOption * harassMinMana;
+IMenuOption * laneclearAttackE;
 IMenuOption * miscFocusTargetWithE;
 IMenuOption * miscDontEUnderHealth;
 IMenuOption * killstealWithR;
@@ -102,6 +105,7 @@ void loadMenu() {
 	baseMenu = GPluginSDK->AddMenu("ggTristana");
 	comboMenu = baseMenu->AddMenu("Combo");
 	harassMenu = baseMenu->AddMenu("Harass");
+	laneclearMenu = baseMenu->AddMenu("Lane Clear");
 	killstealMenu = baseMenu->AddMenu("Killsteal");
 	miscMenu = baseMenu->AddMenu("Misc.");
 	drawMenu = baseMenu->AddMenu("Drawing");
@@ -119,6 +123,12 @@ void loadMenu() {
 	*/
 	harassAttackE = harassMenu->CheckBox("E", true);
 	harassMinMana = harassMenu->AddInteger("Min Mana for Harass", 0, 100, 50);
+
+
+	/*
+		Load Lane Clear options into Menu
+	*/
+	laneclearAttackE = laneclearMenu->CheckBox("E", false);
 
 	/*
 		Load Killsteal options into Menu
@@ -233,6 +243,20 @@ void killsteal() {
 	}
 }
 
+void laneclear() {
+	if (laneclearAttackE->Enabled()) {
+		if (E->IsReady()) {
+			for (auto minion : GEntityList->GetAllMinions(false, true, false)) {
+				if (me->IsValidTarget(minion, E->Range())) {
+					if (minion->IsDead()) continue;
+					E->CastOnTarget(minion);
+					return;
+				}
+			}
+		}
+	}
+}
+
 IUnit * getEnemyWithE() {
 
 	for (auto enemy : GEntityList->GetAllHeros(false, true)) {
@@ -255,6 +279,7 @@ PLUGIN_EVENT(void) onUpdate() {
 		break;
 	case kModeLaneClear:
 		harass();
+		laneclear();
 		break;
 	}
 
